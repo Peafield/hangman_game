@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"unicode"
 )
@@ -64,6 +65,12 @@ func printHangedMan(i int) {
 	fmt.Println(hangedMan[i])
 }
 
+func clearScreen() {
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
+
 func getWord() []string {
 	resp, err := http.Get("http://random-word-api.herokuapp.com/word")
 	if err != nil {
@@ -119,6 +126,16 @@ func guessALetter() string {
 	return strings.ToLower(guessedLetter)
 }
 
+func isUsedLetter(l string, u []string) bool {
+	delim := true
+	for _, ch := range u {
+		if l != ch {
+			delim = false
+		}
+	}
+	return delim
+}
+
 func isCorrectGuess(g string, ws []string, u []string) ([]string, bool) {
 	delim := false
 	for i, ch := range ws {
@@ -140,42 +157,65 @@ func gameOver(u []string) bool {
 	return game
 }
 
-func main() {
-	i := 0
-	wordString := getWord()
-	fmt.Println(wordString)
-	underScores := createUnderScores(len(wordString))
-	printHangedMan(i)
-	printBoardState(underScores)
-	guessedLetter := guessALetter()
-	for !gameOver(underScores) {
-		underScores, valid := isCorrectGuess(guessedLetter, wordString, underScores)
-		if !valid {
-			if i == 7 {
-				gameOver(underScores)
-				fmt.Println("You Lost!")
-				os.Exit(0)
-			}
-			fmt.Println("Incorrect!")
-			i++
-			printHangedMan(i)
-			printBoardState(underScores)
-			guessedLetter = guessALetter()
-			underScores, valid = isCorrectGuess(guessedLetter, wordString, underScores)
-
-		} else {
-			fmt.Println(i)
-			printHangedMan(i)
-			printBoardState(underScores)
-			guessedLetter = guessALetter()
-			underScores, valid = isCorrectGuess(guessedLetter, wordString, underScores)
-		}
-	}
-	if gameOver(underScores) {
-		printHangedMan(i)
-		printBoardState(underScores)
-		fmt.Println("You Won!")
+func playAgain() {
+	fmt.Println("Would you like to play again? Y or N:")
+	var playAgain string
+	fmt.Scanln(&playAgain)
+	if strings.ToUpper(playAgain) == "Y" {
+		clearScreen()
+		play()
+	} else {
+		os.Exit(0)
 	}
 }
 
+func play() {
+	i := 0
+	wordString := getWord()
+	var valid bool
+	var guessedLetter string
+	var alreadyGuessed []string
+	underScores := createUnderScores(len(wordString))
+	for !gameOver(underScores) {
+		clearScreen()
+		if i == 6 {
+			printHangedMan(i)
+			fmt.Println("You Lost!")
+			fmt.Println("The Word Was:")
+			printBoardState(wordString)
+			playAgain()
+		}
+		fmt.Println("Used Letters: ", alreadyGuessed[:])
+		printHangedMan(i)
+		printBoardState(underScores)
+		guessedLetter = guessALetter()
+		// TO DO: Fix this. Why only happens on first go? Could reuse isCorrectGuess here...?
+		if len(alreadyGuessed) > 0 {
+			for isUsedLetter(guessedLetter, alreadyGuessed) {
+				fmt.Println("Already Used!")
+				guessedLetter = guessALetter()
+			}
+		}
+		alreadyGuessed = append(alreadyGuessed, guessedLetter)
+		underScores, valid = isCorrectGuess(guessedLetter, wordString, underScores)
+		if !valid {
+			fmt.Println("Incorrect!")
+			i++
+		}
+	}
+	if gameOver(underScores) {
+		clearScreen()
+		printHangedMan(i)
+		printBoardState(underScores)
+		fmt.Println("You Won!")
+		playAgain()
+	}
+}
+
+func main() {
+	play()
+}
+
 // TO DO: Add detection for already chosen letters
+// TO DO: If lost, print out answer
+// TO DO: Create game struct
