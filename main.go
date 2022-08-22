@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -127,10 +128,10 @@ func guessALetter() string {
 }
 
 func isUsedLetter(l string, u []string) bool {
-	delim := true
+	delim := false
 	for _, ch := range u {
-		if l != ch {
-			delim = false
+		if l == ch {
+			delim = true
 		}
 	}
 	return delim
@@ -190,7 +191,7 @@ func play() {
 		printBoardState(underScores)
 		guessedLetter = guessALetter()
 		// TO DO: Fix this. Why only happens on first go? Could reuse isCorrectGuess here...?
-		if len(alreadyGuessed) > 0 {
+		if len(alreadyGuessed) != 0 {
 			for isUsedLetter(guessedLetter, alreadyGuessed) {
 				fmt.Println("Already Used!")
 				guessedLetter = guessALetter()
@@ -200,6 +201,7 @@ func play() {
 		underScores, valid = isCorrectGuess(guessedLetter, wordString, underScores)
 		if !valid {
 			fmt.Println("Incorrect!")
+			time.Sleep(1 * time.Second)
 			i++
 		}
 	}
@@ -218,4 +220,4 @@ func main() {
 
 // TO DO: Add detection for already chosen letters
 // TO DO: If lost, print out answer
-// TO DO: Create game struct
+// TO DO: Create game Struct
