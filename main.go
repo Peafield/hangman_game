@@ -190,7 +190,6 @@ func play() {
 		printHangedMan(i)
 		printBoardState(underScores)
 		guessedLetter = guessALetter()
-		// TO DO: Fix this. Why only happens on first go? Could reuse isCorrectGuess here...?
 		if len(alreadyGuessed) != 0 {
 			for isUsedLetter(guessedLetter, alreadyGuessed) {
 				fmt.Println("Already Used!")
@@ -218,6 +217,4 @@ func main() {
 	play()
 }
 
-// TO DO: Add detection for already chosen letters
-// TO DO: If lost, print out answer
 // TO DO: Create game Struct
